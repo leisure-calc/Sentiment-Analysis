@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis Dashboard</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/sentiment-analysis.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">Sentiment Analyzer</h1>
+                <p class="subtitle">Analyze emotions in text with precision</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Input Section -->
+            <section class="input-section">
+                <div class="input-card">
+                    <form method="POST" action="/" id="analysisForm">
+                        <label for="message" class="input-label">Enter your text</label>
+                        <textarea 
+                            id="message" 
+                            name="message"
+                            class="text-input" 
+                            placeholder="Type something to analyze its sentiment..."
+                            maxlength="500"
+                        >{{ message }}</textarea>
+                        <div class="input-footer">
+                            <span class="char-count"><span id="charCount">0</span>/500</span>
+                            <button type="submit" id="analyzeBtn" class="analyze-btn">
+                                <span class="btn-text">Analyze</span>
+                                <span class="btn-loader"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <!-- Always render results section in DOM, hide/show with JavaScript based on flaskData -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-card">
+                    <!-- Emotion Display -->
+                    <div class="emotion-display">
+                        <div class="emotion-icon" id="emotionIcon">😐</div>
+                        <div class="emotion-info">
+                            <h2 class="emotion-name" id="emotionName">Neutral</h2>
+                            <p class="emotion-description" id="emotionDescription">No strong sentiment detected</p>
+                        </div>
+                    </div>
+
+                    <!-- Score Slider -->
+                    <div class="score-section">
+                        <div class="score-header">
+                            <label class="score-label">Confidence Score</label>
+                            <span class="score-value" id="scoreValue">0.00</span>
+                        </div>
+                        <div class="slider-container">
+                            <input 
+                                type="range" 
+                                id="scoreSlider" 
+                                class="score-slider" 
+                                min="0" 
+                                max="100" 
+                                value="0"
+                                disabled
+                            >
+                            <div class="slider-track" id="sliderTrack"></div>
+                            <div class="slider-labels">
+                                <span>0.0</span>
+                                <span>0.5</span>
+                                <span>1.0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emotion Breakdown -->
+                    <div class="emotions-grid">
+                        <div class="emotion-item" data-emotion="anger">
+                            <div class="emotion-item-icon">🤬</div>
+                            <div class="emotion-item-name">Anger</div>
+                            <div class="emotion-item-bar">
+                                <div class="emotion-item-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="emotion-item-score">0.00</div>
+                        </div>
+                        <div class="emotion-item" data-emotion="disgust">
+                            <div class="emotion-item-icon">🤢</div>
+                            <div class="emotion-item-name">Disgust</div>
+                            <div class="emotion-item-bar">
+                                <div class="emotion-item-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="emotion-item-score">0.00</div>
+                        </div>
+                        <div class="emotion-item" data-emotion="fear">
+                            <div class="emotion-item-icon">😨</div>
+                            <div class="emotion-item-name">Fear</div>
+                            <div class="emotion-item-bar">
+                                <div class="emotion-item-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="emotion-item-score">0.00</div>
+                        </div>
+                        <div class="emotion-item" data-emotion="joy">
+                            <div class="emotion-item-icon">😀</div>
+                            <div class="emotion-item-name">Joy</div>
+                            <div class="emotion-item-bar">
+                                <div class="emotion-item-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="emotion-item-score">0.00</div>
+                        </div>
+                        <div class="emotion-item" data-emotion="neutral">
+                            <div class="emotion-item-icon">😐</div>
+                            <div class="emotion-item-name">Neutral</div>
+                            <div class="emotion-item-bar">
+                                <div class="emotion-item-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="emotion-item-score">0.00</div>
+                        </div>
+                        <div class="emotion-item" data-emotion="sadness">
+                            <div class="emotion-item-icon">😭</div>
+                            <div class="emotion-item-name">Sadness</div>
+                            <div class="emotion-item-bar">
+                                <div class="emotion-item-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="emotion-item-score">0.00</div>
+                        </div>
+                        <div class="emotion-item" data-emotion="surprise">
+                            <div class="emotion-item-icon">😲</div>
+                            <div class="emotion-item-name">Surprise</div>
+                            <div class="emotion-item-bar">
+                                <div class="emotion-item-fill" style="width: 0%"></div>
+                            </div>
+                            <div class="emotion-item-score">0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Analyzed Text Display -->
+                    <div class="analyzed-text">
+                        <h3 class="analyzed-text-title">Analyzed Text</h3>
+                        <p class="analyzed-text-content" id="analyzedText"></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <section class="error-section" id="errorSection" style="display: none;">
+                <div class="error-card">
+                    <div class="error-icon">⚠️</div>
+                    <h3 class="error-title">Analysis Error</h3>
+                    <p class="error-message" id="errorMessage"></p>
+                    <button class="error-btn" onclick="resetAnalysis()">Try Again</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Background Animation -->
+        <div class="background-animation">
+            <div class="floating-emoji">🤬</div>
+            <div class="floating-emoji">🤢</div>
+            <div class="floating-emoji">😨</div>
+            <div class="floating-emoji">😀</div>
+            <div class="floating-emoji">😐</div>
+            <div class="floating-emoji">😭</div>
+            <div class="floating-emoji">😲</div>
+        </div>
+    </div>
+
+    <!-- Pass Flask data to JavaScript as JSON -->
+    <script>
+        const flaskData = {
+            label: {{ label | tojson | safe }},
+            score: {{ score | tojson | safe }},
+            list: {{ list | tojson | safe }},
+            message: {{ message | tojson | safe }}
+        };
+        console.log(flaskData)
+
+        document.addEventListener("DOMContentLoaded", () => {
+  const resultsSection = document.getElementById("resultsSection");
+  const errorSection = document.getElementById("errorSection");
+  const emotionIcon = document.getElementById("emotionIcon");
+  const emotionName = document.getElementById("emotionName");
+  const emotionDescription = document.getElementById("emotionDescription");
+  const scoreValue = document.getElementById("scoreValue");
+  const scoreSlider = document.getElementById("scoreSlider");
+  const analyzedText = document.getElementById("analyzedText");
+  const charCount = document.getElementById("charCount");
+  const textInput = document.getElementById("message");
+
+  // Emotion display config
+  const emotionConfig = {
+    anger: { emoji: "🤬", color: "#ff4757", description: "Strong negative emotion detected" },
+    disgust: { emoji: "🤢", color: "#2ed573", description: "Repulsion or aversion detected" },
+    fear: { emoji: "😨", color: "#9c27b0", description: "Anxiety or concern detected" },
+    joy: { emoji: "😀", color: "#ffa502", description: "Happiness and positivity detected" },
+    neutral: { emoji: "😐", color: "#6c757d", description: "No strong sentiment detected" },
+    sadness: { emoji: "😭", color: "#0984e3", description: "Melancholy or sorrow detected" },
+    surprise: { emoji: "😲", color: "#ff6348", description: "Astonishment or shock detected" },
+  };
+
+  // Live character counter
+  textInput?.addEventListener("input", (e) => {
+    charCount.textContent = e.target.value.length;
+  });
+
+  // If Flask provided results
+  if (flaskData && flaskData.label && flaskData.score) {
+    displayResults(flaskData);
+  }
+
+  function displayResults(data) {
+    const emotion = data.label.toLowerCase();
+    const score = parseFloat(data.score);
+
+    if (!emotionConfig[emotion]) {
+      showError("Invalid emotion returned from model.");
+      return;
+    }
+
+    const config = emotionConfig[emotion];
+    emotionIcon.textContent = config.emoji;
+    emotionName.textContent = capitalize(emotion);
+    emotionDescription.textContent = config.description;
+
+    scoreValue.textContent = score.toFixed(2);
+    scoreSlider.value = Math.round(score * 100);
+
+    // Update emotion breakdown bars
+    updateEmotionBreakdown(data.list);
+
+    // Show the analyzed text
+    const textareaValue = flaskData.message || textInput.value.trim();
+    analyzedText.textContent = textareaValue || "(No text provided)";
+
+
+    resultsSection.style.display = "block";
+    errorSection.style.display = "none";
+
+    setTimeout(() => {
+      resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+  }
+
+  function updateEmotionBreakdown(results) {
+    const emotionItems = document.querySelectorAll(".emotion-item");
+
+    emotionItems.forEach((item) => {
+      const emotion = item.dataset.emotion;
+      const match = results.find((r) => r.label.toLowerCase() === emotion);
+      const score = match ? match.score : 0;
+      const percentage = Math.round(score * 100);
+
+      const fillBar = item.querySelector(".emotion-item-fill");
+      const scoreDisplay = item.querySelector(".emotion-item-score");
+
+      fillBar.style.width = percentage + "%";
+      fillBar.style.backgroundColor = emotionConfig[emotion].color;
+      scoreDisplay.textContent = score.toFixed(2);
+    });
+  }
+
+  function showError(message) {
+    document.getElementById("errorMessage").textContent = message;
+    resultsSection.style.display = "none";
+    errorSection.style.display = "block";
+  }
+
+  function capitalize(text) {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  window.resetAnalysis = function () {
+    document.getElementById("analysisForm").reset();
+    charCount.textContent = "0";
+    resultsSection.style.display = "none";
+    errorSection.style.display = "none";
+    textInput.focus();
+  };
+});
+    </script>
+<footer class="footer">
+  <a href="https://github.com/leisure-calc" target="_blank" class="footer-link">
+    <img src="{{ url_for('static', filename='images/github.png') }}" alt="GitHub" class="github-icon">
+    View on GitHub
+  </a>
+  <p class="footer-credit">© 2025 leisure-calc | Kaustuv Pokharel</p>
+</footer>
+
+
+</body>
+</html>
